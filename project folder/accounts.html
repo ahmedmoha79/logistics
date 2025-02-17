@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Account - Fleet Management</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* (Keep your existing CSS styles the same) */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f7f9;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .account-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .account-container h1 {
+      margin: 0 0 20px 0;
+      font-size: 24px;
+    }
+
+    .account-container p {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    .account-container button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .account-container button:hover {
+      background: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="account-container">
+    <h1>User Account</h1>
+    <p><strong>Username:</strong> <span id="username"></span></p>
+    <p><strong>Email:</strong> <span id="email"></span></p>
+    <button onclick="window.location.href='home.html'">Back to Home</button>
+  </div>
+
+  <script>
+    async function fetchUserData() {
+      try {
+        const userId = localStorage.getItem('userId');
+        
+        if (!userId) {
+          alert('Please login first!');
+          window.location.href = 'index.html';  // Correct path to login
+          return;
+        }
+
+        const response = await fetch(`http://localhost:5000/api/user?userId=${userId}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const user = await response.json();
+        
+        if (!user.username) {
+          throw new Error('Invalid user data');
+        }
+
+        document.getElementById('username').textContent = user.username;
+        document.getElementById('email').textContent = user.email || 'N/A';
+
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to load user data. Redirecting to login...');
+        localStorage.removeItem('userId');  // Clear invalid ID
+        window.location.href = '../index.html';  // Correct path
+      }
+    }
+
+    // Start the process
+    fetchUserData();
+  </script>
+</body>
+</html>

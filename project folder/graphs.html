@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graphs - Fleet Management</title>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js for graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f7f9;
+      color: #333;
+    }
+
+    /* Navigation Bar */
+    #navbar {
+      background: #2c3e50;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    #navbar .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #navbar .menu {
+      display: flex;
+      gap: 20px;
+    }
+
+    #navbar .menu a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    #navbar .menu a.active {
+      color: #3498db;
+    }
+
+    #navbar .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    #navbar .user-profile i {
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* Settings Dropdown Styles */
+    .settings-dropdown {
+      position: absolute;
+      right: 20px;
+      top: 50px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 1000;
+      min-width: 200px;
+    }
+
+    .settings-dropdown.active {
+      display: block;
+    }
+
+    .settings-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .settings-dropdown li {
+      padding: 10px 20px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .settings-dropdown li:hover {
+      background: #f5f5f5;
+    }
+
+    /* Night Mode Styles */
+    body.night-mode {
+      background: #1a1a1a;
+      color: #ffffff;
+    }
+
+    .night-mode .graph-collection,
+    .night-mode .graph {
+      background: #2d2d2d;
+      color: #ffffff;
+    }
+
+    .night-mode .settings-dropdown {
+      background: #2d2d2d;
+      color: #ffffff;
+    }
+
+    .night-mode .settings-dropdown li {
+      color: #ffffff;
+    }
+
+    .night-mode .settings-dropdown li:hover {
+      background: #3d3d3d;
+    }
+
+    /* Main Content */
+    .container {
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .header button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .header button:hover {
+      background: #2980b9;
+    }
+
+    /* Tabbed Interface */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tabs button {
+      background: #e0e0e0;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .tabs button.active {
+      background: #3498db;
+      color: white;
+    }
+
+    /* Graph Collection Section */
+    .graph-collection {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .graph-collection h2 {
+      margin: 0 0 20px 0;
+      font-size: 20px;
+    }
+
+    .graph-collection .add-graph {
+      background: #2ecc71;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .graph-collection .add-graph:hover {
+      background: #27ae60;
+    }
+
+    /* Graph Display */
+    .graph {
+      margin-bottom: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .graph h3 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    .graph canvas {
+      width: 100% !important; /* Ensure canvas fits container */
+      height: 300px !important; /* Fixed height for consistency */
+    }
+
+    /* Date Selection & Filters */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filters select, .filters input[type="date"] {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .filters button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .filters button:hover {
+      background: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <div id="navbar">
+    <div class="logo">Fahan Logistics</div>
+    <div class="menu">
+      <a href="home.html">MAP</a>
+      <a href="reports.html">REPORTS</a>
+      <a href="graphs.html" class="active">GRAPHS</a>
+      <a href="trips.html">TRIPS</a>
+    </div>
+    <div class="user-profile">
+      <i class="fas fa-bell"></i>
+      <i class="fas fa-cog"></i>
+      <a href="accounts.html"><i class="fas fa-user-circle"></i></a>
+    </div>
+    <!-- Settings Dropdown -->
+    <div class="settings-dropdown">
+      <ul>
+        <li id="nightModeToggle">
+          <label style="cursor: pointer;">
+            <input type="checkbox" id="nightModeCheckbox"> Night Mode
+          </label>
+        </li>
+        <!-- Add more settings items here -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>Graph Analytics</h1>
+      <button>Back to Map</button>
+    </div>
+
+    <!-- Tabbed Interface -->
+    <div class="tabs">
+      <button class="active">GRAPHS</button>
+      <button>TRIPS</button>
+      <button>EVENTS</button>
+    </div>
+
+    <!-- Graph Collection Section -->
+    <div class="graph-collection">
+      <h2>Graph Collection 1</h2>
+      <button class="add-graph">+ Add Graph</button>
+    </div>
+
+    <!-- Graph Display -->
+    <div class="graph">
+      <h3>VEHICLE SPEED</h3>
+      <canvas id="speedChart"></canvas>
+    </div>
+    <div class="graph">
+      <h3>IGNITION</h3>
+      <canvas id="ignitionChart"></canvas>
+    </div>
+    <div class="graph">
+      <h3>ELEVATION</h3>
+      <canvas id="elevationChart"></canvas>
+    </div>
+
+    <!-- Date Selection & Filters -->
+    <div class="filters">
+      <select>
+        <option>Today</option>
+        <option>Yesterday</option>
+        <option>Last 7 Days</option>
+      </select>
+      <input type="date">
+      <select>
+        <option>BAP760ZM</option>
+        <option>TRUCK001</option>
+        <option>TRUCK002</option>
+      </select>
+      <button>Apply</button>
+    </div>
+  </div>
+
+  <!-- Chart.js Scripts -->
+  <script>
+    // Vehicle Speed Graph
+    const speedCtx = document.getElementById('speedChart').getContext('2d');
+    const speedChart = new Chart(speedCtx, {
+      type: 'line',
+      data: {
+        labels: ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00'],
+        datasets: [{
+          label: 'Speed (km/h)',
+          data: [60, 70, 65, 80, 75, 90],
+          borderColor: '#3498db',
+          fill: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    });
+
+    // Ignition Graph
+    const ignitionCtx = document.getElementById('ignitionChart').getContext('2d');
+    const ignitionChart = new Chart(ignitionCtx, {
+      type: 'line',
+      data: {
+        labels: ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00'],
+        datasets: [{
+          label: 'Ignition Status',
+          data: [1, 0, 1, 1, 0, 1],
+          borderColor: '#e74c3c',
+          fill: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    });
+
+    // Elevation Graph
+    const elevationCtx = document.getElementById('elevationChart').getContext('2d');
+    const elevationChart = new Chart(elevationCtx, {
+      type: 'bar',
+      data: {
+        labels: ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00'],
+        datasets: [{
+          label: 'Elevation (m)',
+          data: [100, 150, 200, 180, 220, 250],
+          backgroundColor: '#2ecc71',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    });
+
+    // Settings Dropdown Toggle
+    const settingsIcon = document.querySelector('.fa-cog');
+    const settingsDropdown = document.querySelector('.settings-dropdown');
+
+    settingsIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settingsDropdown.classList.toggle('active');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!settingsDropdown.contains(e.target)) {
+        settingsDropdown.classList.remove('active');
+      }
+    });
+
+    // Night Mode Toggle
+    const nightModeCheckbox = document.getElementById('nightModeCheckbox');
+    
+    // Load saved theme
+    if (localStorage.getItem('nightMode') === 'enabled') {
+      document.body.classList.add('night-mode');
+      nightModeCheckbox.checked = true;
+    }
+
+    nightModeCheckbox.addEventListener('change', () => {
+      document.body.classList.toggle('night-mode');
+      
+      if (document.body.classList.contains('night-mode')) {
+        localStorage.setItem('nightMode', 'enabled');
+      } else {
+        localStorage.removeItem('nightMode');
+      }
+    });
+  </script>
+</body>
+</html>

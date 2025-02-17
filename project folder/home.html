@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - Fleet Management</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* === EXISTING CSS (UNCHANGED) === */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+    }
+
+    #navbar {
+      background: #2c3e50;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+
+    #navbar .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #navbar .menu {
+      display: flex;
+      gap: 20px;
+    }
+
+    #navbar .menu a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    #navbar .menu a.active {
+      color: #3498db;
+    }
+
+    #navbar .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    #navbar .user-profile i {
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    #sidebar {
+      width: 300px;
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      overflow-y: auto;
+      position: fixed;
+      top: 60px;
+      bottom: 0;
+      left: 0;
+    }
+
+    #vehicle-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    #vehicle-list li {
+      padding: 10px;
+      border-bottom: 1px solid #34495e;
+      cursor: pointer;
+    }
+
+    #vehicle-list li:hover {
+      background: #34495e;
+    }
+
+    .status-dot {
+      height: 10px;
+      width: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .status-dot.active {
+      background: green;
+    }
+
+    .status-dot.inactive {
+      background: red;
+    }
+
+    #map {
+      flex: 1;
+      height: calc(100vh - 60px);
+      margin-left: 300px;
+      margin-top: 60px;
+    }
+
+    #loading {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    /* === NEW SETTINGS DROPDOWN CSS === */
+    .settings-dropdown {
+      position: absolute;
+      right: 20px;
+      top: 50px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+      z-index: 1000;
+      min-width: 200px;
+    }
+
+    .settings-dropdown.active {
+      display: block;
+    }
+
+    .settings-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .settings-dropdown li {
+      padding: 10px 20px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .settings-dropdown li label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* === NIGHT MODE STYLES === */
+    body.night-mode {
+      background: #1a1a1a;
+      color: #ffffff;
+    }
+
+    .night-mode #sidebar,
+    .night-mode .settings-dropdown {
+      background: #2d2d2d;
+    }
+
+    .night-mode .settings-dropdown li {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <!-- === EXISTING NAVBAR === -->
+  <div id="navbar">
+    <div class="logo">FAHAN LOGISTICS</div>
+    <div class="menu">
+      <a href="home.html" class="active">MAP</a>
+      <a href="reports.html">REPORTS</a>
+      <a href="graphs.html">GRAPHS</a>
+      <a href="trips.html">TRIPS</a>
+    </div>
+    <div class="user-profile">
+      <i class="fas fa-bell"></i>
+      <i class="fas fa-cog" id="settingsIcon"></i>
+      <a href="accounts.html"><i class="fas fa-user-circle"></i></a>
+    </div>
+
+    <!-- === NEW SETTINGS DROPDOWN === -->
+    <div class="settings-dropdown">
+      <ul>
+        <li>
+          <label>
+            <input type="checkbox" id="nightModeCheckbox">
+            Night Mode
+          </label>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- === EXISTING CONTENT === -->
+  <div id="sidebar">
+    <h2>Vehicles</h2>
+    <div id="loading">Loading vehicles...</div>
+    <ul id="vehicle-list"></ul>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // === EXISTING MAP CODE ===
+    const map = L.map('map').setView([-1.286389, 36.817223], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // === NEW SETTINGS FUNCTIONALITY ===
+    const settingsIcon = document.getElementById('settingsIcon');
+    const settingsDropdown = document.querySelector('.settings-dropdown');
+    const nightModeCheckbox = document.getElementById('nightModeCheckbox');
+
+    // Toggle dropdown
+    settingsIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settingsDropdown.classList.toggle('active');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!settingsDropdown.contains(e.target) && e.target !== settingsIcon) {
+        settingsDropdown.classList.remove('active');
+      }
+    });
+
+    // Night Mode persistence
+    if (localStorage.getItem('nightMode') === 'enabled') {
+      document.body.classList.add('night-mode');
+      nightModeCheckbox.checked = true;
+    }
+
+    nightModeCheckbox.addEventListener('change', () => {
+      document.body.classList.toggle('night-mode');
+      localStorage.setItem('nightMode', 
+        document.body.classList.contains('night-mode') ? 'enabled' : 'disabled'
+      );
+    });
+
+    // === EXISTING VEHICLE FETCH CODE ===
+    async function fetchVehicles() {
+      try {
+        document.getElementById('loading').style.display = 'block';
+        const response = await fetch('http://localhost:5000/api/shipments');
+        if (!response.ok) throw new Error('Failed to fetch vehicles');
+        const vehicles = await response.json();
+
+        map.eachLayer(layer => {
+          if (layer instanceof L.Marker) map.removeLayer(layer);
+        });
+        document.getElementById('vehicle-list').innerHTML = '';
+
+        vehicles.forEach(vehicle => {
+          const marker = L.marker([vehicle.latitude, vehicle.longitude]).addTo(map);
+          marker.bindPopup(`<b>${vehicle.trackingNo}</b><br>Status: ${vehicle.status}<br>Last Update: ${new Date(vehicle.timestamp).toLocaleString()}`);
+
+          const listItem = document.createElement('li');
+          listItem.innerHTML = `<span class="status-dot ${vehicle.status === 'active' ? 'active' : 'inactive'}"></span>${vehicle.trackingNo}`;
+          listItem.addEventListener('click', () => {
+            map.setView([vehicle.latitude, vehicle.longitude], 13);
+            marker.openPopup();
+          });
+          document.getElementById('vehicle-list').appendChild(listItem);
+        });
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('vehicle-list').innerHTML = '<li>Error loading vehicles</li>';
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    fetchVehicles();
+    setInterval(fetchVehicles, 5000);
+  </script>
+</body>
+</html>

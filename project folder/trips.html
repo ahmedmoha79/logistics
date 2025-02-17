@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trips - Fleet Management</title>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Global Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f7f9;
+      color: #333;
+    }
+
+    /* Navigation Bar */
+    #navbar {
+      background: #2c3e50;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    #navbar .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #navbar .menu {
+      display: flex;
+      gap: 20px;
+    }
+
+    #navbar .menu a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    #navbar .menu a.active {
+      color: #3498db;
+    }
+
+    #navbar .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    #navbar .user-profile i {
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* Main Content */
+    .container {
+      padding: 20px;
+    }
+
+    /* Filters Section */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filters select, .filters input[type="date"] {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .filters button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .filters button:hover {
+      background: #2980b9;
+    }
+
+    /* Table Styles */
+    .trips-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .trips-table th, .trips-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .trips-table th {
+      background: #2c3e50;
+      color: white;
+      font-weight: bold;
+    }
+
+    .trips-table tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    .trips-table tr:hover {
+      background: #f1f1f1;
+    }
+
+    .trips-table td {
+      color: #555;
+    }
+
+    .trips-table .numeric {
+      text-align: right;
+    }
+
+    /* Summary Row */
+    .summary-row {
+      background: #e0f7fa;
+      font-weight: bold;
+    }
+
+    /* Loading Indicator */
+    #loading {
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+    }
+
+    #loading i {
+      font-size: 24px;
+      color: #3498db;
+    }
+
+    /* Watermark */
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <div id="navbar">
+    <div class="logo">FAHAN LOGISTICS</div>
+    <div class="menu">
+      <a href="home.html">MAP</a>
+      <a href="reports.html">REPORTS</a>
+      <a href="graphs.html">GRAPHS</a>
+      <a href="trips.html" class="active">TRIPS</a>
+    </div>
+    <div class="user-profile">
+      <i class="fas fa-bell"></i>
+      <a href="alarms.html"></a>
+      <i class="fas fa-cog"></i>
+      <i class="fas fa-user-circle"></i>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Filters -->
+    <div class="filters">
+      <input type="date" id="startDate">
+      <input type="date" id="endDate">
+      <select id="vehicleSelect">
+        <option>All Vehicles</option>
+        <option>BAP760ZM</option>
+        <option>TRUCK001</option>
+        <option>TRUCK002</option>
+      </select>
+      <button onclick="fetchTrips()">Apply</button>
+    </div>
+
+    <!-- Trips Table -->
+    <table class="trips-table">
+      <thead>
+        <tr>
+          <th>Departure Time</th>
+          <th>Departure Location</th>
+          <th>Arrival Time</th>
+          <th>Arrival Location</th>
+          <th class="numeric">Mileage</th>
+          <th class="numeric">Duration</th>
+          <th class="numeric">Stop Time</th>
+          <th class="numeric">Odometer</th>
+          <th class="numeric">GPS Mileage</th>
+          <th class="numeric">Cost</th>
+        </tr>
+      </thead>
+      <tbody id="tripsBody">
+        <!-- Trip data will be populated dynamically -->
+      </tbody>
+      <tfoot>
+        <tr class="summary-row">
+          <td colspan="4">Total</td>
+          <td class="numeric">500 km</td>
+          <td class="numeric">10 hrs</td>
+          <td class="numeric">2 hrs</td>
+          <td class="numeric">1000 km</td>
+          <td class="numeric">950 km</td>
+          <td class="numeric">$500</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Loading Indicator -->
+    <div id="loading">
+      <i class="fas fa-spinner fa-spin"></i> Loading trips...
+    </div>
+  </div>
+
+  <!-- Watermark -->
+  <div class="watermark">FAHAN LOGISTICS</div>
+
+  <!-- JavaScript -->
+  <script>
+    // Mock data for demonstration
+    const mockTrips = [
+      {
+        departureTime: '2023-10-01 08:00',
+        departureLocation: 'Nairobi',
+        arrivalTime: '2023-10-01 12:00',
+        arrivalLocation: 'Mombasa',
+        mileage: 500,
+        duration: '4 hrs',
+        stopTime: '30 mins',
+        odometer: 1000,
+        gpsMileage: 950,
+        cost: 250
+      },
+      {
+        departureTime: '2023-10-02 09:00',
+        departureLocation: 'Mombasa',
+        arrivalTime: '2023-10-02 14:00',
+        arrivalLocation: 'Nairobi',
+        mileage: 500,
+        duration: '5 hrs',
+        stopTime: '1 hr',
+        odometer: 1500,
+        gpsMileage: 1450,
+        cost: 250
+      }
+    ];
+
+    // Function to fetch and display trips
+    function fetchTrips() {
+      const loading = document.getElementById('loading');
+      const tripsBody = document.getElementById('tripsBody');
+
+      // Show loading indicator
+      loading.style.display = 'block';
+      tripsBody.innerHTML = '';
+
+      // Simulate API call delay
+      setTimeout(() => {
+        // Populate table with mock data
+        mockTrips.forEach(trip => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${trip.departureTime}</td>
+            <td>${trip.departureLocation}</td>
+            <td>${trip.arrivalTime}</td>
+            <td>${trip.arrivalLocation}</td>
+            <td class="numeric">${trip.mileage} km</td>
+            <td class="numeric">${trip.duration}</td>
+            <td class="numeric">${trip.stopTime}</td>
+            <td class="numeric">${trip.odometer} km</td>
+            <td class="numeric">${trip.gpsMileage} km</td>
+            <td class="numeric">$${trip.cost}</td>
+          `;
+          tripsBody.appendChild(row);
+        });
+
+        // Hide loading indicator
+        loading.style.display = 'none';
+      }, 1000); // Simulate 1-second delay
+    }
+
+    // Fetch trips on page load
+    fetchTrips();
+  </script>
+</body>
+</html>

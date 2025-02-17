@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alarm Reports - Fleet Management</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Consistent Global Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f7f9;
+      color: #333;
+    }
+
+    /* Navigation Bar */
+    #navbar {
+      background: #2c3e50;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    #navbar .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #navbar .menu {
+      display: flex;
+      gap: 20px;
+    }
+
+    #navbar .menu a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    #navbar .menu a.active {
+      color: #3498db;
+    }
+
+    /* User Profile Icons */
+    #navbar .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    #navbar .user-profile i {
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    /* Settings Dropdown */
+    .settings-dropdown {
+      position: absolute;
+      right: 20px;
+      top: 50px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 1000;
+      min-width: 200px;
+    }
+
+    .settings-dropdown.active {
+      display: block;
+    }
+
+    .settings-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .settings-dropdown li {
+      padding: 10px 20px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .settings-dropdown li:hover {
+      background: #f5f5f5;
+    }
+
+    /* Night Mode Styles */
+    body.night-mode {
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    body.night-mode .alarm-table {
+      background: #2d2d2d;
+      color: #fff;
+    }
+
+    body.night-mode .alarm-table th {
+      background: #1c1c1c;
+      color: #fff;
+    }
+
+    body.night-mode .alarm-table td {
+      color: #fff;
+    }
+
+    body.night-mode .alarm-table tr:nth-child(even) {
+      background-color: #3d3d3d;
+    }
+
+    body.night-mode .alarm-table tr:nth-child(odd) {
+      background-color: #2d2d2d;
+    }
+
+    body.night-mode .settings-dropdown {
+      background: #2d2d2d;
+      color: #fff;
+    }
+
+    body.night-mode .settings-dropdown li {
+      color: #fff;
+    }
+
+    body.night-mode .settings-dropdown li:hover {
+      background: #3d3d3d;
+    }
+
+    /* Main Content Container */
+    .container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 20px auto;
+    }
+
+    /* Filters Section */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    select, input[type="date"] {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-width: 180px;
+    }
+
+    /* Alarm Table */
+    .alarm-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .alarm-table th, 
+    .alarm-table td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    .alarm-table th {
+      background: #2c3e50;
+      color: white;
+      font-weight: 600;
+    }
+
+    .alarm-table tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .active .status-indicator { background: #e74c3c; }
+    .resolved .status-indicator { background: #2ecc71; }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <div id="navbar">
+    <div class="logo">FleetTrack</div>
+    <div class="menu">
+      <a href="home.html">MAP</a>
+      <a href="reports.html" class="active">REPORTS</a>
+      <a href="graphs.html">GRAPHS</a>
+      <a href="trips.html">TRIPS</a>
+      <a href="alarm.html">ALARMS</a>
+    </div>
+    <!-- Updated User Profile Section -->
+    <div class="user-profile">
+      <i class="fas fa-bell"></i>
+      <i class="fas fa-cog" id="settingsIcon"></i>
+      <a href="accounts.html"><i class="fas fa-user-circle"></i></a>
+    </div>
+    <!-- Settings Dropdown -->
+    <div class="settings-dropdown">
+      <ul>
+        <li id="nightModeToggle">
+          <label style="cursor: pointer;">
+            <input type="checkbox" id="nightModeCheckbox"> Night Mode
+          </label>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <input type="date" id="startDate">
+        <input type="date" id="endDate">
+        <select id="statusFilter">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      <button class="btn" onclick="fetchAlarms()">Apply Filters</button>
+      <button class="btn" onclick="resetFilters()">Reset</button>
+    </div>
+
+    <!-- Alarm Table -->
+    <table class="alarm-table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Timestamp</th>
+          <th>Vehicle</th>
+          <th>Alarm Type</th>
+          <th>Location</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody id="alarmBody">
+        <!-- Data populated by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Settings Dropdown Functionality
+    const settingsIcon = document.getElementById('settingsIcon');
+    const settingsDropdown = document.querySelector('.settings-dropdown');
+
+    settingsIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settingsDropdown.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!settingsDropdown.contains(e.target)) {
+        settingsDropdown.classList.remove('active');
+      }
+    });
+
+    // Night Mode Functionality
+    const nightModeCheckbox = document.getElementById('nightModeCheckbox');
+
+    if (localStorage.getItem('nightMode') === 'enabled') {
+      document.body.classList.add('night-mode');
+      nightModeCheckbox.checked = true;
+    }
+
+    nightModeCheckbox.addEventListener('change', () => {
+      document.body.classList.toggle('night-mode');
+      localStorage.setItem('nightMode', 
+        document.body.classList.contains('night-mode') ? 'enabled' : 'disabled'
+      );
+    });
+
+    // Original Alarm Fetching Logic
+    async function fetchAlarms() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const status = document.getElementById('statusFilter').value;
+
+      try {
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (status) params.append('status', status);
+
+        const response = await fetch(`http://localhost:5000/api/alarms?${params}`);
+        const alarms = await response.json();
+        populateTable(alarms);
+      } catch (error) {
+        console.error('Error fetching alarms:', error);
+        alert('Failed to load alarm data');
+      }
+    }
+
+    function populateTable(alarms) {
+      const tbody = document.getElementById('alarmBody');
+      tbody.innerHTML = alarms.map(alarm => `
+        <tr class="${alarm.status}">
+          <td>
+            <span class="status-indicator"></span>
+            ${alarm.status.charAt(0).toUpperCase() + alarm.status.slice(1)}
+          </td>
+          <td>${new Date(alarm.timestamp).toLocaleString()}</td>
+          <td>${alarm.vehicle_id}</td>
+          <td>${alarm.alarm_type}</td>
+          <td>${alarm.location}</td>
+          <td>${alarm.description}</td>
+        </tr>
+      `).join('');
+    }
+
+    function resetFilters() {
+      document.getElementById('startDate').value = '';
+      document.getElementById('endDate').value = '';
+      document.getElementById('statusFilter').value = '';
+      fetchAlarms();
+    }
+
+    // Initial load
+    fetchAlarms();
+  </script>
+</body>
+</html>
