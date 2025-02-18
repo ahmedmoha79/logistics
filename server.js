@@ -52,6 +52,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'project folder', 'index.html'));
 });
 
+// ======================
+// Authentication Routes
+// ======================
 app.post('/login', (req, res) => {
   db.get(
     'SELECT * FROM users WHERE username = ?',
@@ -92,6 +95,37 @@ app.post('/signup', async (req, res) => {
   }
 });
 
+// ======================
+// Alarm Routes (CRITICAL ADDITION)
+// ======================
+app.get('/api/alarms', (req, res) => {
+  const { startDate, endDate, status } = req.query;
+  
+  let query = `SELECT * FROM alarms`;
+  const params = [];
+
+  if (startDate && endDate) {
+    query += ` WHERE timestamp BETWEEN ? AND ?`;
+    params.push(startDate, endDate);
+  }
+
+  if (status) {
+    query += params.length ? ' AND' : ' WHERE';
+    query += ` status = ?`;
+    params.push(status);
+  }
+
+  query += ` ORDER BY timestamp DESC`;
+
+  db.all(query, params, (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// ======================
+// Server Startup
+// ======================
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
