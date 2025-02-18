@@ -72,7 +72,25 @@ app.post('/login', (req, res) => {
   );
 });
 
-// Keep all your other existing routes below (signup, shipments, alarms, etc.)
+app.post('/signup', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const hashedPassword = await bcryptjs.hash(password, 10);
+    db.run(
+      'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+      [username, hashedPassword],
+      function (err) {
+        if (err) {
+          return res.status(400).json({ error: "Username already exists" });
+        }
+        res.json({ id: this.lastID, username });
+      }
+    );
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
