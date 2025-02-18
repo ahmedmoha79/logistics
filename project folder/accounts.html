@@ -73,7 +73,7 @@
           return;
         }
 
-        const response = await fetch(`http://localhost:5000/api/user?userId=${userId}`);
+        const response = await fetch(`/api/user?userId=${userId}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
