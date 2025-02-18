@@ -96,35 +96,35 @@ app.post('/signup', async (req, res) => {
 });
 
 // ======================
-// User Data Route (CRITICAL FIX)
+// Shipments Route (CRITICAL ADDITION)
 // ======================
-app.get('/api/user', (req, res) => {
-  const userId = req.query.userId;
-  if (!userId) {
-    return res.status(400).json({ error: 'User ID required' });
-  }
-
-  db.get(
-    'SELECT id, username, email FROM users WHERE id = ?',
-    [userId],
-    (err, user) => {
-      if (err) {
-        return res.status(500).json({ error: "Database error" });
-      }
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      res.json(user);
-    }
-  );
+app.get('/api/shipments', (req, res) => {
+  db.all('SELECT * FROM shipments', (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
 });
 
 // ======================
-// Alarm Routes (CRITICAL ADDITION)
+// User Data Route
+// ======================
+app.get('/api/user', (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) return res.status(400).json({ error: 'User ID required' });
+
+  db.get('SELECT id, username, email FROM users WHERE id = ?', [userId], 
+    (err, user) => {
+      if (err) return res.status(500).json({ error: "Database error" });
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.json(user);
+  });
+});
+
+// ======================
+// Alarm Routes
 // ======================
 app.get('/api/alarms', (req, res) => {
   const { startDate, endDate, status } = req.query;
-  
   let query = `SELECT * FROM alarms`;
   const params = [];
 
