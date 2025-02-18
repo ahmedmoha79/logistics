@@ -58,6 +58,100 @@
       cursor: pointer;
     }
 
+    /* === NEW NOTIFICATIONS DROPDOWN === */
+    .notifications-dropdown {
+      position: absolute;
+      right: 80px;
+      top: 50px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+      z-index: 1000;
+      min-width: 250px;
+    }
+
+    .notifications-dropdown.active {
+      display: block;
+    }
+
+    .notifications-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .notifications-dropdown li {
+      padding: 15px 20px;
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    /* === SETTINGS DROPDOWN === */
+    .settings-dropdown {
+      position: absolute;
+      right: 20px;
+      top: 50px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 1000;
+      min-width: 200px;
+    }
+
+    .settings-dropdown.active {
+      display: block;
+    }
+
+    .settings-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .settings-dropdown li {
+      padding: 10px 20px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .settings-dropdown li:hover {
+      background: #f5f5f5;
+    }
+
+    /* Night Mode Styles */
+    body.night-mode {
+      background: #1a1a1a;
+      color: #ffffff;
+    }
+
+    .night-mode .trips-table,
+    .night-mode .trips-table th,
+    .night-mode .trips-table td {
+      background: #2d2d2d;
+      color: #ffffff;
+    }
+
+    .night-mode .trips-table tr:nth-child(even) {
+      background: #3d3d3d;
+    }
+
+    .night-mode .trips-table tr:hover {
+      background: #4d4d4d;
+    }
+
+    .night-mode .settings-dropdown,
+    .night-mode .notifications-dropdown {
+      background: #2d2d2d;
+    }
+
+    .night-mode .settings-dropdown li,
+    .night-mode .notifications-dropdown li {
+      color: #ffffff;
+    }
+
+    /* Existing styles remain unchanged below */
     /* Main Content */
     .container {
       padding: 20px;
@@ -166,10 +260,28 @@
       <a href="trips.html" class="active">TRIPS</a>
     </div>
     <div class="user-profile">
-      <i class="fas fa-bell"></i>
-      <a href="alarms.html"></a>
-      <i class="fas fa-cog"></i>
-      <i class="fas fa-user-circle"></i>
+      <i class="fas fa-bell" id="bellIcon"></i>
+      <i class="fas fa-cog" id="settingsIcon"></i>
+      <a href="accounts.html"><i class="fas fa-user-circle"></i></a>
+    </div>
+
+    <!-- === NEW NOTIFICATIONS DROPDOWN === -->
+    <div class="notifications-dropdown">
+      <ul>
+        <li>No notifications currently</li>
+      </ul>
+    </div>
+
+    <!-- === SETTINGS DROPDOWN === -->
+    <div class="settings-dropdown">
+      <ul>
+        <li>
+          <label style="cursor: pointer;">
+            <input type="checkbox" id="nightModeCheckbox">
+            Night Mode
+          </label>
+        </li>
+      </ul>
     </div>
   </div>
 
@@ -231,7 +343,51 @@
 
   <!-- JavaScript -->
   <script>
-    // Mock data for demonstration
+    // === DROPDOWNS FUNCTIONALITY ===
+    const bellIcon = document.getElementById('bellIcon');
+    const notificationsDropdown = document.querySelector('.notifications-dropdown');
+    const settingsIcon = document.getElementById('settingsIcon');
+    const settingsDropdown = document.querySelector('.settings-dropdown');
+    const nightModeCheckbox = document.getElementById('nightModeCheckbox');
+
+    // Toggle notifications dropdown
+    bellIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notificationsDropdown.classList.toggle('active');
+      settingsDropdown.classList.remove('active');
+    });
+
+    // Toggle settings dropdown
+    settingsIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settingsDropdown.classList.toggle('active');
+      notificationsDropdown.classList.remove('active');
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!notificationsDropdown.contains(e.target) && e.target !== bellIcon) {
+        notificationsDropdown.classList.remove('active');
+      }
+      if (!settingsDropdown.contains(e.target) && e.target !== settingsIcon) {
+        settingsDropdown.classList.remove('active');
+      }
+    });
+
+    // === NIGHT MODE FUNCTIONALITY ===
+    if (localStorage.getItem('nightMode') === 'enabled') {
+      document.body.classList.add('night-mode');
+      nightModeCheckbox.checked = true;
+    }
+
+    nightModeCheckbox.addEventListener('change', () => {
+      document.body.classList.toggle('night-mode');
+      localStorage.setItem('nightMode', 
+        document.body.classList.contains('night-mode') ? 'enabled' : 'disabled'
+      );
+    });
+
+    // === EXISTING TRIPS FUNCTIONALITY ===
     const mockTrips = [
       {
         departureTime: '2023-10-01 08:00',
@@ -259,18 +415,14 @@
       }
     ];
 
-    // Function to fetch and display trips
     function fetchTrips() {
       const loading = document.getElementById('loading');
       const tripsBody = document.getElementById('tripsBody');
 
-      // Show loading indicator
       loading.style.display = 'block';
       tripsBody.innerHTML = '';
 
-      // Simulate API call delay
       setTimeout(() => {
-        // Populate table with mock data
         mockTrips.forEach(trip => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -288,12 +440,10 @@
           tripsBody.appendChild(row);
         });
 
-        // Hide loading indicator
         loading.style.display = 'none';
-      }, 1000); // Simulate 1-second delay
+      }, 1000);
     }
 
-    // Fetch trips on page load
     fetchTrips();
   </script>
 </body>
