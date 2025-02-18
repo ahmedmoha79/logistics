@@ -96,6 +96,30 @@ app.post('/signup', async (req, res) => {
 });
 
 // ======================
+// User Data Route (CRITICAL FIX)
+// ======================
+app.get('/api/user', (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID required' });
+  }
+
+  db.get(
+    'SELECT id, username, email FROM users WHERE id = ?',
+    [userId],
+    (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: "Database error" });
+      }
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    }
+  );
+});
+
+// ======================
 // Alarm Routes (CRITICAL ADDITION)
 // ======================
 app.get('/api/alarms', (req, res) => {
