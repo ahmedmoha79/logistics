@@ -203,7 +203,7 @@
 <body>
   <!-- Navigation Bar -->
   <div id="navbar">
-    <div class="logo">FleetTrack</div>
+    <div class="logo">FAHAN</div>
     <div class="menu">
       <a href="home.html">MAP</a>
       <a href="reports.html" class="active">REPORTS</a>
@@ -294,7 +294,7 @@
       );
     });
 
-    // Original Alarm Fetching Logic
+    // Updated Alarm Fetching Logic
     async function fetchAlarms() {
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
@@ -306,7 +306,7 @@
         if (endDate) params.append('endDate', endDate);
         if (status) params.append('status', status);
 
-        const response = await fetch(`http://localhost:5000/api/alarms?${params}`);
+        const response = await fetch(`https://logistics-hek4.onrender.com/api/alarms?${params}`);
         const alarms = await response.json();
         populateTable(alarms);
       } catch (error) {
