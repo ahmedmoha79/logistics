@@ -250,7 +250,7 @@
     async function fetchVehicles() {
       try {
         document.getElementById('loading').style.display = 'block';
-        const response = await fetch('http://localhost:5000/api/shipments');
+        const response = await fetch('/api/shipments');
         if (!response.ok) throw new Error('Failed to fetch vehicles');
         const vehicles = await response.json();
 
