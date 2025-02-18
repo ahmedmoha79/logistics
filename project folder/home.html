@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* === EXISTING CSS (UNCHANGED) === */
+    /* === EXISTING CSS === */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -117,7 +117,36 @@
       margin-top: 20px;
     }
 
-    /* === NEW SETTINGS DROPDOWN CSS === */
+    /* === NOTIFICATIONS DROPDOWN (NEW) === */
+    .notifications-dropdown {
+      position: absolute;
+      right: 80px;
+      top: 50px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+      z-index: 1000;
+      min-width: 250px;
+    }
+
+    .notifications-dropdown.active {
+      display: block;
+    }
+
+    .notifications-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .notifications-dropdown li {
+      padding: 15px 20px;
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    /* === SETTINGS DROPDOWN === */
     .settings-dropdown {
       position: absolute;
       right: 20px;
@@ -130,47 +159,26 @@
       min-width: 200px;
     }
 
-    .settings-dropdown.active {
-      display: block;
-    }
-
-    .settings-dropdown ul {
-      list-style: none;
-      margin: 0;
-      padding: 10px 0;
-    }
-
-    .settings-dropdown li {
-      padding: 10px 20px;
-      cursor: pointer;
-      color: #333;
-    }
-
-    .settings-dropdown li label {
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    /* === NIGHT MODE STYLES === */
+    /* === NIGHT MODE === */
     body.night-mode {
       background: #1a1a1a;
       color: #ffffff;
     }
 
     .night-mode #sidebar,
-    .night-mode .settings-dropdown {
+    .night-mode .settings-dropdown,
+    .night-mode .notifications-dropdown {
       background: #2d2d2d;
     }
 
-    .night-mode .settings-dropdown li {
+    .night-mode .settings-dropdown li,
+    .night-mode .notifications-dropdown li {
       color: #ffffff;
     }
   </style>
 </head>
 <body>
-  <!-- === EXISTING NAVBAR === -->
+  <!-- === NAVBAR === -->
   <div id="navbar">
     <div class="logo">FAHAN LOGISTICS</div>
     <div class="menu">
@@ -180,12 +188,19 @@
       <a href="trips.html">TRIPS</a>
     </div>
     <div class="user-profile">
-      <i class="fas fa-bell"></i>
+      <i class="fas fa-bell" id="bellIcon"></i>
       <i class="fas fa-cog" id="settingsIcon"></i>
       <a href="accounts.html"><i class="fas fa-user-circle"></i></a>
     </div>
 
-    <!-- === NEW SETTINGS DROPDOWN === -->
+    <!-- === NOTIFICATIONS DROPDOWN (NEW) === -->
+    <div class="notifications-dropdown">
+      <ul>
+        <li>No notifications currently</li>
+      </ul>
+    </div>
+
+    <!-- === SETTINGS DROPDOWN === -->
     <div class="settings-dropdown">
       <ul>
         <li>
@@ -209,31 +224,44 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // === EXISTING MAP CODE ===
+    // === MAP CODE ===
     const map = L.map('map').setView([-1.286389, 36.817223], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // === NEW SETTINGS FUNCTIONALITY ===
+    // === NOTIFICATIONS FUNCTIONALITY (NEW) ===
+    const bellIcon = document.getElementById('bellIcon');
+    const notificationsDropdown = document.querySelector('.notifications-dropdown');
     const settingsIcon = document.getElementById('settingsIcon');
     const settingsDropdown = document.querySelector('.settings-dropdown');
     const nightModeCheckbox = document.getElementById('nightModeCheckbox');
 
-    // Toggle dropdown
+    // Toggle notifications dropdown
+    bellIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notificationsDropdown.classList.toggle('active');
+      settingsDropdown.classList.remove('active');
+    });
+
+    // Toggle settings dropdown
     settingsIcon.addEventListener('click', (e) => {
       e.stopPropagation();
       settingsDropdown.classList.toggle('active');
+      notificationsDropdown.classList.remove('active');
     });
 
-    // Close dropdown when clicking outside
+    // Close dropdowns when clicking outside
     document.addEventListener('click', (e) => {
+      if (!notificationsDropdown.contains(e.target) && e.target !== bellIcon) {
+        notificationsDropdown.classList.remove('active');
+      }
       if (!settingsDropdown.contains(e.target) && e.target !== settingsIcon) {
         settingsDropdown.classList.remove('active');
       }
     });
 
-    // Night Mode persistence
+    // === NIGHT MODE ===
     if (localStorage.getItem('nightMode') === 'enabled') {
       document.body.classList.add('night-mode');
       nightModeCheckbox.checked = true;
@@ -246,7 +274,7 @@
       );
     });
 
-    // === EXISTING VEHICLE FETCH CODE ===
+    // === VEHICLE FETCH ===
     async function fetchVehicles() {
       try {
         document.getElementById('loading').style.display = 'block';
