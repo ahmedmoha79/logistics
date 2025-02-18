@@ -27,6 +27,7 @@
       max-width: 400px;
       width: 100%;
       text-align: center;
+      position: relative; /* Added for logout icon positioning */
     }
 
     .account-container h1 {
@@ -52,10 +53,28 @@
     .account-container button:hover {
       background: #2980b9;
     }
+
+    /* === NEW LOGOUT ICON STYLES === */
+    .logout-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 20px;
+      color: #333;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .logout-icon:hover {
+      color: #e74c3c; /* Red color on hover */
+    }
   </style>
 </head>
 <body>
   <div class="account-container">
+    <!-- === NEW LOGOUT ICON === -->
+    <i class="fas fa-sign-out-alt logout-icon" onclick="logoutUser()"></i>
+
     <h1>User Account</h1>
     <p><strong>Username:</strong> <span id="username"></span></p>
     <p><strong>Email:</strong> <span id="email"></span></p>
@@ -63,6 +82,7 @@
   </div>
 
   <script>
+    // === EXISTING FETCH USER DATA FUNCTION ===
     async function fetchUserData() {
       try {
         const userId = localStorage.getItem('userId');
@@ -94,6 +114,12 @@
         localStorage.removeItem('userId');  // Clear invalid ID
         window.location.href = '../index.html';  // Correct path
       }
+    }
+
+    // === NEW LOGOUT FUNCTION ===
+    function logoutUser() {
+      localStorage.removeItem('userId'); // Clear user ID from storage
+      window.location.href = 'index.html'; // Redirect to login page
     }
 
     // Start the process
