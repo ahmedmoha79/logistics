@@ -117,7 +117,7 @@
       margin-top: 20px;
     }
 
-    /* === NOTIFICATIONS DROPDOWN (NEW) === */
+    /* === NOTIFICATIONS DROPDOWN === */
     .notifications-dropdown {
       position: absolute;
       right: 80px;
@@ -159,6 +159,22 @@
       min-width: 200px;
     }
 
+    .settings-dropdown.active {
+      display: block;
+    }
+
+    .settings-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .settings-dropdown li {
+      padding: 10px 20px;
+      cursor: pointer;
+      color: #333;
+    }
+
     /* === NIGHT MODE === */
     body.night-mode {
       background: #1a1a1a;
@@ -193,7 +209,7 @@
       <a href="accounts.html"><i class="fas fa-user-circle"></i></a>
     </div>
 
-    <!-- === NOTIFICATIONS DROPDOWN (NEW) === -->
+    <!-- === NOTIFICATIONS DROPDOWN === -->
     <div class="notifications-dropdown">
       <ul>
         <li>No notifications currently</li>
@@ -230,28 +246,28 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // === NOTIFICATIONS FUNCTIONALITY (NEW) ===
+    // === DROPDOWNS FUNCTIONALITY ===
     const bellIcon = document.getElementById('bellIcon');
     const notificationsDropdown = document.querySelector('.notifications-dropdown');
     const settingsIcon = document.getElementById('settingsIcon');
     const settingsDropdown = document.querySelector('.settings-dropdown');
     const nightModeCheckbox = document.getElementById('nightModeCheckbox');
 
-    // Toggle notifications dropdown
+    // Toggle notifications
     bellIcon.addEventListener('click', (e) => {
       e.stopPropagation();
       notificationsDropdown.classList.toggle('active');
       settingsDropdown.classList.remove('active');
     });
 
-    // Toggle settings dropdown
+    // Toggle settings
     settingsIcon.addEventListener('click', (e) => {
       e.stopPropagation();
       settingsDropdown.classList.toggle('active');
       notificationsDropdown.classList.remove('active');
     });
 
-    // Close dropdowns when clicking outside
+    // Close dropdowns
     document.addEventListener('click', (e) => {
       if (!notificationsDropdown.contains(e.target) && e.target !== bellIcon) {
         notificationsDropdown.classList.remove('active');
@@ -308,7 +324,7 @@
     }
 
     fetchVehicles();
-    setInterval(fetchVehicles, 500000);
+    setInterval(fetchVehicles, 5000);
   </script>
 </body>
 </html>
