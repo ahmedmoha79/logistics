@@ -4,56 +4,70 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcryptjs = require('bcryptjs');
 const cors = require('cors');
+const mongoose = require('mongoose');
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// ======================
+// Database Connections
+// ======================
+
+// SQLite Database (for users, alarms, etc.)
 const db = new sqlite3.Database(process.env.DATABASE_URL || './logistics.db');
 
-// Database setup
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS shipments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    trackingNo TEXT,
-    status TEXT,
-    latitude REAL,
-    longitude REAL
-  )`);
+// MongoDB Connection (for phone tracking)
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://mohamedbeyhaqi:bQJx9JfwQNlJEXOE@cluster0.eu65h.mongodb.net/phoneTracker?retryWrites=true&w=majority';
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password_hash TEXT,
-    email TEXT
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS alarms (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME NOT NULL,
-    vehicle_id TEXT NOT NULL,
-    alarm_type TEXT NOT NULL,
-    location TEXT,
-    description TEXT,
-    status TEXT CHECK(status IN ('active', 'resolved')),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+// MongoDB Schema for Phone Tracking
+const phoneSchema = new mongoose.Schema({
+  deviceId: { type: String, required: true, unique: true },
+  latitude: { type: Number, required: true },
+  longitude: { type: Number, required: true },
+  timestamp: { type: Date, default: Date.now },
+  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  batteryLevel: { type: Number, required: true },
+  os: {
+    name: { type: String },
+    version: { type: String },
+  },
+  hardware: {
+    memory: { type: String },
+    cores: { type: Number },
+    model: { type: String },
+  },
 });
 
+const Phone = mongoose.model('Phone', phoneSchema);
+
+// ======================
 // Middleware
+// ======================
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST'],
-  credentials: true
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'project folder')));
 
+// ======================
 // Routes
+// ======================
+
+// Home Route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'project folder', 'index.html'));
 });
 
 // ======================
-// Authentication Routes
+// Authentication Routes (SQLite)
 // ======================
 app.post('/login', (req, res) => {
   db.get(
@@ -62,14 +76,14 @@ app.post('/login', (req, res) => {
     async (err, user) => {
       if (err) return res.status(500).json({ error: "Database error" });
       if (!user) return res.status(400).json({ error: "Invalid credentials" });
-      
+
       const validPassword = await bcryptjs.compare(req.body.password, user.password_hash);
       if (!validPassword) return res.status(400).json({ error: "Invalid credentials" });
-      
-      res.json({ 
-        id: user.id, 
-        username: user.username, 
-        email: user.email || 'N/A' 
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email || 'N/A',
       });
     }
   );
@@ -96,7 +110,54 @@ app.post('/signup', async (req, res) => {
 });
 
 // ======================
-// Shipments Route (CRITICAL ADDITION)
+// Phone Tracking Routes (MongoDB)
+// ======================
+
+// Save Phone Location
+app.post('/api/gps', async (req, res) => {
+  const { deviceId, latitude, longitude, deviceInfo } = req.body;
+
+  try {
+    const phone = await Phone.findOneAndUpdate(
+      { deviceId },
+      {
+        $set: {
+          latitude,
+          longitude,
+          batteryLevel: deviceInfo.hardware.battery.level,
+          os: deviceInfo.os,
+          hardware: {
+            memory: deviceInfo.hardware.memory,
+            cores: deviceInfo.hardware.cores,
+            model: deviceInfo.device.model,
+          },
+          status: 'active',
+          timestamp: new Date(),
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ message: 'Location updated', phone });
+  } catch (error) {
+    console.error('Error saving location:', error);
+    res.status(500).json({ error: 'Failed to save location' });
+  }
+});
+
+// Get All Phones
+app.get('/api/phones', async (req, res) => {
+  try {
+    const phones = await Phone.find().sort({ timestamp: -1 });
+    res.json(phones);
+  } catch (error) {
+    console.error('Error fetching phones:', error);
+    res.status(500).json({ error: 'Failed to fetch phones' });
+  }
+});
+
+// ======================
+// Shipments Route (SQLite)
 // ======================
 app.get('/api/shipments', (req, res) => {
   db.all('SELECT * FROM shipments', (err, rows) => {
@@ -106,22 +167,7 @@ app.get('/api/shipments', (req, res) => {
 });
 
 // ======================
-// User Data Route
-// ======================
-app.get('/api/user', (req, res) => {
-  const userId = req.query.userId;
-  if (!userId) return res.status(400).json({ error: 'User ID required' });
-
-  db.get('SELECT id, username, email FROM users WHERE id = ?', [userId], 
-    (err, user) => {
-      if (err) return res.status(500).json({ error: "Database error" });
-      if (!user) return res.status(404).json({ error: "User not found" });
-      res.json(user);
-  });
-});
-
-// ======================
-// Alarm Routes
+// Alarm Routes (SQLite)
 // ======================
 app.get('/api/alarms', (req, res) => {
   const { startDate, endDate, status } = req.query;
