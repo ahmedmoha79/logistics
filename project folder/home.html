@@ -1,3 +1,7 @@
+home.html 
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +11,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* === YOUR ORIGINAL CSS - NO CHANGES === */
+    /* === EXISTING CSS === */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -31,22 +35,170 @@
       z-index: 1000;
     }
 
-    /* ... (All your original CSS remains EXACTLY as you wrote it) ... */
-
-    /* === ADD ONLY THESE NEW STYLES === */
-    .phone-marker {
-      background: transparent;
-      border: none;
-    }
-    .phone-icon {
-      color: #3498db;
+    #navbar .logo {
       font-size: 24px;
-      text-shadow: 0 0 3px white;
+      font-weight: bold;
+    }
+
+    #navbar .menu {
+      display: flex;
+      gap: 20px;
+    }
+
+    #navbar .menu a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    #navbar .menu a.active {
+      color: #3498db;
+    }
+
+    #navbar .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    #navbar .user-profile i {
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    #sidebar {
+      width: 300px;
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      overflow-y: auto;
+      position: fixed;
+      top: 60px;
+      bottom: 0;
+      left: 0;
+    }
+
+    #vehicle-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    #vehicle-list li {
+      padding: 10px;
+      border-bottom: 1px solid #34495e;
+      cursor: pointer;
+    }
+
+    #vehicle-list li:hover {
+      background: #34495e;
+    }
+
+    .status-dot {
+      height: 10px;
+      width: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .status-dot.active {
+      background: green;
+    }
+
+    .status-dot.inactive {
+      background: red;
+    }
+
+    #map {
+      flex: 1;
+      height: calc(100vh - 60px);
+      margin-left: 300px;
+      margin-top: 60px;
+    }
+
+    #loading {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    /* === NOTIFICATIONS DROPDOWN === */
+    .notifications-dropdown {
+      position: absolute;
+      right: 80px;
+      top: 50px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+      z-index: 1000;
+      min-width: 250px;
+    }
+
+    .notifications-dropdown.active {
+      display: block;
+    }
+
+    .notifications-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .notifications-dropdown li {
+      padding: 15px 20px;
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    /* === SETTINGS DROPDOWN === */
+    .settings-dropdown {
+      position: absolute;
+      right: 20px;
+      top: 50px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+      z-index: 1000;
+      min-width: 200px;
+    }
+
+    .settings-dropdown.active {
+      display: block;
+    }
+
+    .settings-dropdown ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 0;
+    }
+
+    .settings-dropdown li {
+      padding: 10px 20px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    /* === NIGHT MODE === */
+    body.night-mode {
+      background: #1a1a1a;
+      color: #ffffff;
+    }
+
+    .night-mode #sidebar,
+    .night-mode .settings-dropdown,
+    .night-mode .notifications-dropdown {
+      background: #2d2d2d;
+    }
+
+    .night-mode .settings-dropdown li,
+    .night-mode .notifications-dropdown li {
+      color: #ffffff;
     }
   </style>
 </head>
 <body>
-  <!-- === YOUR ORIGINAL NAVBAR === -->
+  <!-- === NAVBAR === -->
   <div id="navbar">
     <div class="logo">FAHAN LOGISTICS</div>
     <div class="menu">
@@ -61,14 +213,14 @@
       <a href="accounts.html"><i class="fas fa-user-circle"></i></a>
     </div>
 
-    <!-- Notifications Dropdown -->
+    <!-- === NOTIFICATIONS DROPDOWN === -->
     <div class="notifications-dropdown">
       <ul>
         <li>No notifications currently</li>
       </ul>
     </div>
 
-    <!-- Settings Dropdown -->
+    <!-- === SETTINGS DROPDOWN === -->
     <div class="settings-dropdown">
       <ul>
         <li>
@@ -81,82 +233,102 @@
     </div>
   </div>
 
-  <!-- === SIDEBAR (CHANGED TO PHONES) === -->
+  <!-- === EXISTING CONTENT === -->
   <div id="sidebar">
-    <h2>Phones</h2>
-    <div id="loading">Loading phones...</div>
-    <ul id="phone-list"></ul>
+    <h2>Vehicles</h2>
+    <div id="loading">Loading vehicles...</div>
+    <ul id="vehicle-list"></ul>
   </div>
 
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // === MAP INITIALIZATION ===
+    // === MAP CODE ===
     const map = L.map('map').setView([-1.286389, 36.817223], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-    // === PHONE TRACKING SYSTEM ===
-    let phoneMarkers = {};
+    // === DROPDOWNS FUNCTIONALITY ===
+    const bellIcon = document.getElementById('bellIcon');
+    const notificationsDropdown = document.querySelector('.notifications-dropdown');
+    const settingsIcon = document.getElementById('settingsIcon');
+    const settingsDropdown = document.querySelector('.settings-dropdown');
+    const nightModeCheckbox = document.getElementById('nightModeCheckbox');
 
-    // Custom Phone Icon
-    function createPhoneIcon() {
-      return L.divIcon({
-        className: 'phone-marker',
-        html: '<div class="phone-icon"><i class="fas fa-mobile-alt"></i></div>',
-        iconSize: [30, 30]
-      });
+    // Toggle notifications
+    bellIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notificationsDropdown.classList.toggle('active');
+      settingsDropdown.classList.remove('active');
+    });
+
+    // Toggle settings
+    settingsIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settingsDropdown.classList.toggle('active');
+      notificationsDropdown.classList.remove('active');
+    });
+
+    // Close dropdowns
+    document.addEventListener('click', (e) => {
+      if (!notificationsDropdown.contains(e.target) && e.target !== bellIcon) {
+        notificationsDropdown.classList.remove('active');
+      }
+      if (!settingsDropdown.contains(e.target) && e.target !== settingsIcon) {
+        settingsDropdown.classList.remove('active');
+      }
+    });
+
+    // === NIGHT MODE ===
+    if (localStorage.getItem('nightMode') === 'enabled') {
+      document.body.classList.add('night-mode');
+      nightModeCheckbox.checked = true;
     }
 
-    // Fetch Phone Locations
-    async function fetchPhones() {
+    nightModeCheckbox.addEventListener('change', () => {
+      document.body.classList.toggle('night-mode');
+      localStorage.setItem('nightMode', 
+        document.body.classList.contains('night-mode') ? 'enabled' : 'disabled'
+      );
+    });
+
+    // === VEHICLE FETCH ===
+    async function fetchVehicles() {
       try {
-        const response = await fetch('/api/phones');
-        const phones = await response.json();
+        document.getElementById('loading').style.display = 'block';
+        const response = await fetch('/api/shipments');
+        if (!response.ok) throw new Error('Failed to fetch vehicles');
+        const vehicles = await response.json();
 
-        // Remove loading message
-        document.getElementById('loading').style.display = 'none';
-
-        // Update map markers
-        phones.forEach(phone => {
-          if (!phoneMarkers[phone.deviceId]) {
-            phoneMarkers[phone.deviceId] = L.marker([phone.latitude, phone.longitude], {
-              icon: createPhoneIcon()
-            }).addTo(map).bindPopup(`
-              <b>${phone.deviceId}</b><br>
-              Battery: ${phone.batteryLevel}%<br>
-              Last Update: ${new Date(phone.timestamp).toLocaleTimeString()}
-            `);
-          } else {
-            phoneMarkers[phone.deviceId]
-              .setLatLng([phone.latitude, phone.longitude])
-              .setPopupContent(`
-                <b>${phone.deviceId}</b><br>
-                Battery: ${phone.batteryLevel}%<br>
-                Last Update: ${new Date(phone.timestamp).toLocaleTimeString()}
-              `);
-          }
+        map.eachLayer(layer => {
+          if (layer instanceof L.Marker) map.removeLayer(layer);
         });
+        document.getElementById('vehicle-list').innerHTML = '';
 
-        // Update sidebar list
-        const phoneList = document.getElementById('phone-list');
-        phoneList.innerHTML = phones.map(phone => `
-          <li onclick="map.setView([${phone.latitude}, ${phone.longitude}], 15)">
-            <span class="status-dot ${phone.status === 'active' ? 'active' : 'inactive'}"></span>
-            ${phone.deviceId}
-            <span style="float:right;color:#3498db">${phone.batteryLevel}%</span>
-          </li>
-        `).join('');
+        vehicles.forEach(vehicle => {
+          const marker = L.marker([vehicle.latitude, vehicle.longitude]).addTo(map);
+          marker.bindPopup(`<b>${vehicle.trackingNo}</b><br>Status: ${vehicle.status}<br>Last Update: ${new Date(vehicle.timestamp).toLocaleString()}`);
 
+          const listItem = document.createElement('li');
+          listItem.innerHTML = `<span class="status-dot ${vehicle.status === 'active' ? 'active' : 'inactive'}"></span>${vehicle.trackingNo}`;
+          listItem.addEventListener('click', () => {
+            map.setView([vehicle.latitude, vehicle.longitude], 13);
+            marker.openPopup();
+          });
+          document.getElementById('vehicle-list').appendChild(listItem);
+        });
       } catch (error) {
         console.error('Error:', error);
-        document.getElementById('loading').innerHTML = 'Failed to load phones';
+        document.getElementById('vehicle-list').innerHTML = '<li>Error loading vehicles</li>';
+      } finally {
+        document.getElementById('loading').style.display = 'none';
       }
     }
 
-    // Refresh every 5 seconds
-    setInterval(fetchPhones, 5000);
-    fetchPhones();
+    fetchVehicles();
+    setInterval(fetchVehicles, 5000);
   </script>
 </body>
 </html>
