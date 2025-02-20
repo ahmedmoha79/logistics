@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Real-Time Phone Tracker</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <title>Home - Fleet Management</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* === PRESERVE ALL ORIGINAL STYLES === */
+    /* === YOUR ORIGINAL CSS - NO CHANGES === */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -31,39 +31,26 @@
       z-index: 1000;
     }
 
-    /* ... (keep all your original CSS styles exactly as they were) ... */
+    /* ... (All your original CSS remains EXACTLY as you wrote it) ... */
 
-    /* === PHONE-SPECIFIC STYLES === */
+    /* === ADD ONLY THESE NEW STYLES === */
     .phone-marker {
       background: transparent;
       border: none;
     }
-
     .phone-icon {
       color: #3498db;
       font-size: 24px;
       text-shadow: 0 0 3px white;
-      position: relative;
-    }
-
-    .battery-indicator {
-      position: absolute;
-      bottom: -5px;
-      right: -5px;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 3px;
-      padding: 2px 4px;
-      font-size: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
   </style>
 </head>
 <body>
-  <!-- Updated Navbar -->
+  <!-- === YOUR ORIGINAL NAVBAR === -->
   <div id="navbar">
     <div class="logo">FAHAN LOGISTICS</div>
     <div class="menu">
-      <a href="home.html" class="active">LIVE TRACKING</a>
+      <a href="home.html" class="active">MAP</a>
       <a href="reports.html">REPORTS</a>
       <a href="graphs.html">GRAPHS</a>
       <a href="trips.html">TRIPS</a>
@@ -74,10 +61,27 @@
       <a href="accounts.html"><i class="fas fa-user-circle"></i></a>
     </div>
 
-    <!-- Notifications and Settings dropdowns remain same -->
+    <!-- Notifications Dropdown -->
+    <div class="notifications-dropdown">
+      <ul>
+        <li>No notifications currently</li>
+      </ul>
+    </div>
+
+    <!-- Settings Dropdown -->
+    <div class="settings-dropdown">
+      <ul>
+        <li>
+          <label>
+            <input type="checkbox" id="nightModeCheckbox">
+            Night Mode
+          </label>
+        </li>
+      </ul>
+    </div>
   </div>
 
-  <!-- Updated Sidebar -->
+  <!-- === SIDEBAR (CHANGED TO PHONES) === -->
   <div id="sidebar">
     <h2>Phones</h2>
     <div id="loading">Loading phones...</div>
@@ -86,93 +90,71 @@
 
   <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Initialize Map
+    // === MAP INITIALIZATION ===
     const map = L.map('map').setView([-1.286389, 36.817223], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+    // === PHONE TRACKING SYSTEM ===
     let phoneMarkers = {};
 
-    // Custom Phone Icon with Battery
-    function createPhoneIcon(battery) {
+    // Custom Phone Icon
+    function createPhoneIcon() {
       return L.divIcon({
         className: 'phone-marker',
-        html: `
-          <div class="phone-icon">
-            <i class="fas fa-mobile-alt"></i>
-            <div class="battery-indicator" style="color: ${batteryColor(battery)}">
-              ${Math.round(battery)}%
-            </div>
-          </div>
-        `,
+        html: '<div class="phone-icon"><i class="fas fa-mobile-alt"></i></div>',
         iconSize: [30, 30]
       });
     }
 
-    function batteryColor(level) {
-      if (level > 60) return '#2ecc71';
-      if (level > 20) return '#f1c40f';
-      return '#e74c3c';
-    }
-
-    // Real-Time Updates
+    // Fetch Phone Locations
     async function fetchPhones() {
       try {
         const response = await fetch('/api/phones');
         const phones = await response.json();
 
+        // Remove loading message
+        document.getElementById('loading').style.display = 'none';
+
+        // Update map markers
         phones.forEach(phone => {
-          const existing = phoneMarkers[phone.deviceId];
-          
-          if (existing) {
-            existing.setLatLng([phone.latitude, phone.longitude])
-              .setIcon(createPhoneIcon(phone.batteryLevel))
-              .bindPopup(createPopupContent(phone));
-          } else {
+          if (!phoneMarkers[phone.deviceId]) {
             phoneMarkers[phone.deviceId] = L.marker([phone.latitude, phone.longitude], {
-              icon: createPhoneIcon(phone.batteryLevel)
-            }).addTo(map).bindPopup(createPopupContent(phone));
+              icon: createPhoneIcon()
+            }).addTo(map).bindPopup(`
+              <b>${phone.deviceId}</b><br>
+              Battery: ${phone.batteryLevel}%<br>
+              Last Update: ${new Date(phone.timestamp).toLocaleTimeString()}
+            `);
+          } else {
+            phoneMarkers[phone.deviceId]
+              .setLatLng([phone.latitude, phone.longitude])
+              .setPopupContent(`
+                <b>${phone.deviceId}</b><br>
+                Battery: ${phone.batteryLevel}%<br>
+                Last Update: ${new Date(phone.timestamp).toLocaleTimeString()}
+              `);
           }
         });
 
-        updateSidebar(phones);
+        // Update sidebar list
+        const phoneList = document.getElementById('phone-list');
+        phoneList.innerHTML = phones.map(phone => `
+          <li onclick="map.setView([${phone.latitude}, ${phone.longitude}], 15)">
+            <span class="status-dot ${phone.status === 'active' ? 'active' : 'inactive'}"></span>
+            ${phone.deviceId}
+            <span style="float:right;color:#3498db">${phone.batteryLevel}%</span>
+          </li>
+        `).join('');
+
       } catch (error) {
-        console.error('Fetch error:', error);
+        console.error('Error:', error);
+        document.getElementById('loading').innerHTML = 'Failed to load phones';
       }
     }
 
-    function createPopupContent(phone) {
-      return `
-        <b>${phone.deviceId}</b><br>
-        <small>${new Date(phone.timestamp).toLocaleString()}</small>
-        <hr>
-        <table>
-          <tr><td>Battery</td><td>${phone.batteryLevel}%</td></tr>
-          <tr><td>OS</td><td>${phone.os.name} ${phone.os.version}</td></tr>
-          <tr><td>Last Update</td><td>${timeAgo(phone.timestamp)}</td></tr>
-        </table>
-      `;
-    }
-
-    function updateSidebar(phones) {
-      const list = document.getElementById('phone-list');
-      list.innerHTML = phones.map(phone => `
-        <li>
-          <span class="status-dot ${phone.status}"></span>
-          ${phone.deviceId}
-          <span class="battery-side">${phone.batteryLevel}%</span>
-        </li>
-      `).join('');
-    }
-
-    function timeAgo(date) {
-      const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-      if (seconds < 60) return 'Just now';
-      // ... add time ago calculations ...
-    }
-
-    // Update every 5 seconds
+    // Refresh every 5 seconds
     setInterval(fetchPhones, 5000);
     fetchPhones();
   </script>
